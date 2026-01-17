@@ -152,7 +152,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Media files
 MEDIA_URL = '/media/'
@@ -206,25 +206,36 @@ DEFAULT_FROM_EMAIL = os.environ.get(
     "YKS Men's Wear <no-reply@yksshop.com>",
 )
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
+CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUD_NAME')
+CLOUDINARY_API_KEY = os.environ.get('API_KEY')
+CLOUDINARY_API_SECRET = os.environ.get('API_SECRET')
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUD_NAME'),
-    'API_KEY': os.environ.get('API_KEY'),
-    'API_SECRET': os.environ.get('API_SECRET'),
-    'SECURE': True,
-    'RESOURCE_TYPES': ['image'],
-}
+USE_CLOUDINARY = bool(
+    CLOUDINARY_URL
+    or (CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET)
+)
 
-if os.environ.get('CLOUDINARY_URL'):
-    cloudinary.config(cloudinary_url=os.environ['CLOUDINARY_URL'])
+if USE_CLOUDINARY:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+        'API_KEY': CLOUDINARY_API_KEY,
+        'API_SECRET': CLOUDINARY_API_SECRET,
+        'SECURE': True,
+        'RESOURCE_TYPES': ['image'],
+    }
+    if CLOUDINARY_URL:
+        cloudinary.config(cloudinary_url=CLOUDINARY_URL)
+    else:
+        cloudinary.config(
+            cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+            api_key=CLOUDINARY_STORAGE['API_KEY'],
+            api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+            secure=True,
+        )
 else:
-    cloudinary.config(
-        cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
-        api_key=CLOUDINARY_STORAGE['API_KEY'],
-        api_secret=CLOUDINARY_STORAGE['API_SECRET'],
-        secure=True,
-    )
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 # REST Framework Configuration with JWT
 REST_FRAMEWORK = {
