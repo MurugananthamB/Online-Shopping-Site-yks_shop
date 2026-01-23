@@ -15,6 +15,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 import cloudinary
+import dj_database_url
 
 
 
@@ -81,8 +82,19 @@ MIDDLEWARE = [
 
 ]
 
-CSRF_COOKIE_SECURE = False  # True only if using HTTPS in production
-SESSION_COOKIE_SECURE = False  # Same here
+# Security settings - updated based on DEBUG mode
+if not DEBUG:
+    # Production security settings
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+else:
+    # Development settings
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
 
 # Optional (but recommended in production)
 CSRF_COOKIE_HTTPONLY = False
@@ -110,12 +122,26 @@ TEMPLATES = [
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Use PostgreSQL if DATABASE_URL is set (for production), otherwise use SQLite (for development)
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Production: Use PostgreSQL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    # Development: Use SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation

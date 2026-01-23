@@ -1,5 +1,7 @@
 django==5.2.1
 mysqlclient
+psycopg2-binary
+dj-database-url
 django-allauth
 djangorestframework
 djangorestframework-simplejwt
